@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.chive.bettertrimtooltips.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "bettertrimtooltips.refmap.json",
+  "mixins": [],
+  "client": [
+    "ArmorTrimMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
