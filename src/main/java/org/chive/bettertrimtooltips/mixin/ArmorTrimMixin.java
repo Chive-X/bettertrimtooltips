@@ -1,45 +1,61 @@
 package org.chive.bettertrimtooltips.mixin;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.armortrim.ArmorTrim;
+import net.minecraft.world.item.armortrim.TrimMaterial;
+import net.minecraft.world.item.armortrim.TrimPattern;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.function.Consumer;
 
-import java.util.List;
-import java.util.Optional;
-
-import static net.minecraft.world.item.armortrim.ArmorTrim.getTrim;
 
 @Mixin(ArmorTrim.class)
 public abstract class ArmorTrimMixin {
 
 
+    @Final
+    @Shadow
+    private Holder<TrimMaterial> material;
+
+    @Final
+    @Shadow
+    private Holder<TrimPattern> pattern;
+
+    @Final
+    @Shadow
+    private boolean showInTooltip;
+
     /**
      * @author Chive
      * 改其格式、化三行爲一
+     * 21.1改爲addToTooltip
     */
-    @Inject(method = "appendUpgradeHoverText",at = @At(value = "HEAD"),cancellable = true)
-    private static void appendUpgradeHoverText(ItemStack stack, RegistryAccess registryAccess, List<Component> tooltip, CallbackInfo ci) {
-    Optional<ArmorTrim> optional = getTrim(registryAccess, stack);
-    if (optional.isPresent()) {
-        ArmorTrim trim = optional.get();
-        // 此三行爲元操作
-        // tooltip.add(UPGRADE_TITLE);
-        // tooltip.add(CommonComponents.space().append(trim.pattern().value().copyWithStyle(trim.material())));
-        // tooltip.add(CommonComponents.space().append(trim.material().value().description()));
-        Style style = trim.material().value().description().getStyle();
-        tooltip.add(Component.empty()
-                .append(trim.pattern().value().description()).withStyle(ChatFormatting.GRAY)
-                .append(Component.translatable("tooltip.bettertrimtooltips.trim_bracket_left").setStyle(style))
-                .append(trim.material().value().description())
-                .append(Component.translatable("tooltip.bettertrimtooltips.trim_bracket_right").setStyle(style)));
-        ci.cancel(); // 返回、遶過元操作
-    }
+    @Inject(method = "addToTooltip",at = @At(value = "HEAD"),cancellable = true)
+    private void addToTooltip(Item.TooltipContext tooltipContext, Consumer<Component> componentConsumer,
+                                     TooltipFlag tooltipFlag, CallbackInfo ci) {
+        if(showInTooltip){
+            Style style = material.value().description().getStyle();
+            componentConsumer.accept(Component.empty()
+                    .append(pattern.value().description()).withStyle(ChatFormatting.GRAY)
+                    .append(Component.translatable("tooltip.bettertrimtooltips.trim_bracket_left").setStyle(style))
+                    .append(material.value().description())
+                    .append(Component.translatable("tooltip.bettertrimtooltips.trim_bracket_right").setStyle(style)));
+            ci.cancel();
+        }
+        // 元操作
+//        if (this.showInTooltip) {
+//            componentConsumer.accept(UPGRADE_TITLE);
+//            componentConsumer.accept(CommonComponents.space().append(((TrimPattern)this.pattern.value()).copyWithStyle(this.material)));
+//            componentConsumer.accept(CommonComponents.space().append(((TrimMaterial)this.material.value()).description()));
+//        }
 }
 }
